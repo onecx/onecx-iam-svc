@@ -1,0 +1,20 @@
+apiVersion: v2
+name: onecx-iam-svc
+version: 0.0.0
+appVersion: 0.0.0
+description: Onecx IAM Service
+keywords:
+  - iam
+  - keycloak
+sources:
+  - https://github.com/onecx/onecx-iam
+maintainers:
+  - name: Tkit Developer
+    email: tkit_dev@1000kit.org
+dependencies:
+  - name: helm-quarkus-app
+    alias: app
+    version: ^0
+    repository: oci://ghcr.io/onecx/charts
+
+      
