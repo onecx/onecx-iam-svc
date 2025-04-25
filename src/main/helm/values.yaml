@@ -1,0 +1,6 @@
+app:
+  name: iam-svc
+  image:
+    repository: "onecx/onecx-iam-svc"
+  db:
+    enabled: false

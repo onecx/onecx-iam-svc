@@ -1,0 +1,2 @@
+:page-layout: swagger
+:page-swagger-url: https://raw.githubusercontent.com/onecx/onecx-iam-svc/main/src/main/openapi/onecx-iam-svc-v1.yaml

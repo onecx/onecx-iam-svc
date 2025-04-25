@@ -1,0 +1,376 @@
+---
+openapi: 3.0.3
+info:
+ title: onecx-iam-svc
+ version: 1.0.0
+servers:
+ - url: "http://onecx-iam-svc:8080"
+tags:
+ - name: UsersInternal
+   description: Keycloak user internal service
+paths:
+ /internal/admin/users/search:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - AdminInternal
+   summary: Search users by criteria
+   operationId: searchUsersByCriteria
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/UserSearchCriteria'
+   responses:
+    200:
+     description: OK
+     content:
+      "application/json":
+       schema:
+        $ref: "#/components/schemas/UserPageResult"
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/{userId}/roles:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - AdminInternal
+   summary: Get roles of user by id
+   operationId: getUserRoles
+   parameters:
+    - name: userId
+      in: path
+      required: true
+      description: Keycloak userId
+      schema:
+       type: string
+   requestBody:
+    content:
+     "application/json":
+      schema:
+       $ref: '#/components/schemas/UserRolesSearchRequest'
+   responses:
+    200:
+     description: OK
+     content:
+      "application/json":
+       schema:
+        $ref: '#/components/schemas/UserRolesResponse'
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/roles/search:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - AdminInternal
+   summary: Search roles by criteria
+   operationId: searchRolesByCriteria
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/RoleSearchCriteria'
+   responses:
+    200:
+     description: OK
+     content:
+      "application/json":
+       schema:
+        $ref: "#/components/schemas/RolePageResult"
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/providers:
+  get:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - AdminInternal
+   summary: Get all providers
+   operationId: getAllProviders
+   responses:
+    200:
+     description: OK
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProvidersResponse'
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/me/password:
+  put:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - UserInternal
+   summary: Reset user password
+   operationId: resetPassword
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/UserResetPasswordRequest'
+   responses:
+    204:
+     description: Reset password succeeded
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/me/provider:
+  get:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - UserInternal
+   summary: Get user provider
+   operationId: getUserProvider
+   responses:
+    200:
+     description: OK
+     content:
+      "application/json":
+       schema:
+        $ref: '#/components/schemas/ProvidersResponse'
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+components:
+ securitySchemes:
+  oauth2:
+   type: oauth2
+   flows:
+    clientCredentials:
+     tokenUrl: https://oauth.simple.api/token
+     scopes:
+      ocx-ia:all: Grants access to all operations
+      ocx-ia:read: Grants read access
+      ocx-ia:write: Grants write access
+ schemas:
+  UserRolesSearchRequest:
+   type: object
+   properties:
+    issuer:
+     type: string
+  ProvidersResponse:
+   type: object
+   properties:
+    providers:
+     type: array
+     items:
+      $ref: '#/components/schemas/Provider'
+  Provider:
+   type: object
+   properties:
+    name:
+     type: string
+    displayName:
+     type: string
+    description:
+     type: string
+    fromToken:
+     type: boolean
+    domains:
+     type: array
+     items:
+      $ref: '#/components/schemas/Domain'
+  Domain:
+   type: object
+   properties:
+    name:
+     type: string
+    displayName:
+     type: string
+    issuer:
+     type: string
+  UserRolesResponse:
+   type: object
+   properties:
+    roles:
+     type: array
+     items:
+      $ref: '#/components/schemas/Role'
+  UserSearchCriteria:
+   type: object
+   properties:
+    userName:
+     type: string
+    firstName:
+     type: string
+    lastName:
+     type: string
+    userId:
+     type: string
+    email:
+     type: string
+    issuer:
+     type: string
+    pageNumber:
+     format: int32
+     description: The number of page.
+     default: 0
+     type: integer
+    pageSize:
+     format: int32
+     description: The size of page
+     default: 100
+     maximum: 1000
+     type: integer
+  UserPageResult:
+   type: object
+   properties:
+    totalElements:
+     format: int64
+     description: The total elements in the resource.
+     type: integer
+    number:
+     format: int32
+     type: integer
+    size:
+     format: int32
+     type: integer
+    totalPages:
+     format: int64
+     type: integer
+    stream:
+     type: array
+     items:
+      $ref: '#/components/schemas/User'
+  User:
+   type: object
+   properties:
+    id:
+     type: string
+    origin:
+     type: string
+    domain:
+     type: string
+    createdTimestamp:
+     $ref: '#/components/schemas/OffsetDateTime'
+    username:
+     type: string
+    firstName:
+     type: string
+    lastName:
+     type: string
+    email:
+     type: string
+    attributes:
+     type: object
+     additionalProperties:
+      type: array
+      items:
+       type: string
+  UserResetPasswordRequest:
+   type: object
+   required:
+    - password
+   properties:
+    password:
+     type: string
+     format: password
+     minLength: 1
+  ProblemDetailResponse:
+   type: object
+   properties:
+    errorCode:
+     type: string
+    detail:
+     type: string
+    params:
+     type: array
+     items:
+      $ref: '#/components/schemas/ProblemDetailParam'
+    invalidParams:
+     type: array
+     items:
+      $ref: '#/components/schemas/ProblemDetailInvalidParam'
+  RoleSearchCriteria:
+   type: object
+   properties:
+    name:
+     type: string
+    issuer:
+     type: string
+    pageNumber:
+     format: int32
+     description: The number of page.
+     default: 0
+     type: integer
+    pageSize:
+     format: int32
+     description: The size of page
+     default: 100
+     maximum: 1000
+     type: integer
+  RolePageResult:
+   type: object
+   properties:
+    totalElements:
+     format: int64
+     description: The total elements in the resource.
+     type: integer
+    number:
+     format: int32
+     type: integer
+    size:
+     format: int32
+     type: integer
+    totalPages:
+     format: int64
+     type: integer
+    stream:
+     type: array
+     items:
+      $ref: '#/components/schemas/Role'
+  Role:
+   type: object
+   properties:
+    name:
+     type: string
+    description:
+     type: string
+  ProblemDetailParam:
+   type: object
+   properties:
+    key:
+     type: string
+    value:
+     type: string
+  ProblemDetailInvalidParam:
+   type: object
+   properties:
+    name:
+     type: string
+    message:
+     type: string
+  OffsetDateTime:
+   format: date-time
+   type: string
+   example: 2022-03-10T12:15:50-04:00
