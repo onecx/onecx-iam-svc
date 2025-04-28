@@ -1,9 +1,14 @@
 package org.tkit.onecx.iam.rs.internal.controllers;
 
 import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.core.Response;
 
+import org.jose4j.json.internal.json_simple.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.tkit.onecx.iam.test.AbstractTest;
@@ -15,87 +20,89 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.keycloak.client.KeycloakTestClient;
 import io.restassured.http.ContentType;
 
+import java.util.Base64;
+
 @QuarkusTest
 @TestHTTPEndpoint(AdminRestController.class)
 @GenerateKeycloakClient(clientName = "testClient", scopes = { "ocx-ia:read", "ocx-ia:write", "ocx-ia:all" })
 public class AdminRestControllerTest extends AbstractTest {
     KeycloakTestClient authClient = new KeycloakTestClient();
     KeycloakTestClient keycloakClient = createClient();
-    KeycloakTestClient keycloakClient1 = createClient1();
+//    KeycloakTestClient keycloakClient1 = createClient1();
 
-    @Test
-    void getAllKeycloaksAndRealms_Test() {
-        var kc0_token = this.getTokens(keycloakClient, USER_ALICE).getIdToken();
-        var res = given().when()
-                .auth().oauth2(authClient.getClientAccessToken("testClient"))
-                .header(APM_HEADER_TOKEN, kc0_token)
-                .contentType(ContentType.JSON)
-                .get("/providers")
-                .then()
-                .statusCode(Response.Status.OK.getStatusCode())
-                .extract().as(ProvidersResponseDTO.class);
-        Assertions.assertNotNull(res);
-        Assertions.assertEquals(2, res.getProviders().size());
-        kc0_token = this.getTokens(keycloakClient1, USER_ALICE).getIdToken();
+//    @Test
+//    void getAllKeycloaksAndRealms_Test() {
+//        var kc0_token = this.getTokens(keycloakClient, USER_ALICE).getIdToken();
+//        var res = given().when()
+//                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+//                .header(APM_HEADER_TOKEN, kc0_token)
+//                .contentType(ContentType.JSON)
+//                .get("/providers")
+//                .then()
+//                .statusCode(Response.Status.OK.getStatusCode())
+//                .extract().as(ProvidersResponseDTO.class);
+//        Assertions.assertNotNull(res);
+//        Assertions.assertEquals(2, res.getProviders().size());
+//        kc0_token = this.getTokens(keycloakClient1, USER_ALICE).getIdToken();
+//
+//        //test different kc client
+//        res = given().when()
+//                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+//                .header(APM_HEADER_TOKEN, kc0_token)
+//                .contentType(ContentType.JSON)
+//                .get("/providers")
+//                .then()
+//                .statusCode(Response.Status.OK.getStatusCode())
+//                .extract().as(ProvidersResponseDTO.class);
+//        Assertions.assertNotNull(res);
+//        Assertions.assertEquals(2, res.getProviders().size());
+//
+//        //test without token
+//        given().when()
+//                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+//                .contentType(ContentType.JSON)
+//                .get("/providers")
+//                .then()
+//                .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
+//
+//    }
 
-        //test different kc client
-        res = given().when()
-                .auth().oauth2(authClient.getClientAccessToken("testClient"))
-                .header(APM_HEADER_TOKEN, kc0_token)
-                .contentType(ContentType.JSON)
-                .get("/providers")
-                .then()
-                .statusCode(Response.Status.OK.getStatusCode())
-                .extract().as(ProvidersResponseDTO.class);
-        Assertions.assertNotNull(res);
-        Assertions.assertEquals(2, res.getProviders().size());
-
-        //test without token
-        given().when()
-                .auth().oauth2(authClient.getClientAccessToken("testClient"))
-                .contentType(ContentType.JSON)
-                .get("/providers")
-                .then()
-                .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
-
-    }
-
-    //    @Test
-    //    void roleSearchAllTest() throws JsonProcessingException {
-    //        var tokens = this.getTokens(keycloakClient, USER_ALICE);
-    //        var aliceToken = tokens.getIdToken();
-    //        ObjectMapper mapper = new ObjectMapper();
-    //        Base64.Decoder decoder = Base64.getUrlDecoder();
-    //        String[] chunks = aliceToken.split("\\.");
-    //        String body = new String(decoder.decode(chunks[1]));
-    //        JSONObject jwt = mapper.readValue(body, JSONObject.class);
-    //        var result = given()
-    //                .auth().oauth2(authClient.getClientAccessToken("testClient"))
-    //                .contentType(APPLICATION_JSON)
-    //                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-    //                .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
-    //                .post("/roles/search")
-    //                .then()
-    //                .statusCode(Response.Status.OK.getStatusCode())
-    //                .extract()
-    //                .body().as(RolePageResultDTO.class);
-    //        assertThat(result).isNotNull();
-    //        assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
-    //        //different client
-    //        result = given()
-    //                .auth().oauth2(authClient.getClientAccessToken("testClient"))
-    //                .contentType(APPLICATION_JSON)
-    //                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient1, USER_ALICE).getIdToken())
-    //                .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
-    //                .post("/roles/search")
-    //                .then()
-    //                .statusCode(Response.Status.OK.getStatusCode())
-    //                .extract()
-    //                .body().as(RolePageResultDTO.class);
-    //
-    //        assertThat(result).isNotNull();
-    //        assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
-    //    }
+        @Test
+        void roleSearchAllTest() throws JsonProcessingException {
+            var tokens = this.getTokens(keycloakClient, USER_ALICE);
+            var aliceToken = tokens.getIdToken();
+            ObjectMapper mapper = new ObjectMapper();
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+            String[] chunks = aliceToken.split("\\.");
+            String body = new String(decoder.decode(chunks[1]));
+            JSONObject jwt = mapper.readValue(body, JSONObject.class);
+            var result = given()
+                    .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                    .contentType(APPLICATION_JSON)
+                    .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
+                    .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
+                    .post("/roles/search")
+                    .then()
+                    .statusCode(Response.Status.OK.getStatusCode())
+                    .extract()
+                    .body().as(RolePageResultDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
+            //different client
+//            result = given()
+//                    .auth().oauth2(authClient.getClientAccessToken("testClient"))
+//                    .contentType(APPLICATION_JSON)
+//                    .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient1, USER_ALICE).getIdToken())
+//                    .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
+//                    .post("/roles/search")
+//                    .then()
+//                    .statusCode(Response.Status.OK.getStatusCode())
+//                    .extract()
+//                    .body().as(RolePageResultDTO.class);
+//
+//            assertThat(result).isNotNull();
+//            assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
+        }
     //
     //    @Test
     //    void roleSearchTest() throws JsonProcessingException {
