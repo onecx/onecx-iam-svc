@@ -72,7 +72,7 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
     public Map<String, String> start() {
 
         containers.add(new TestKeycloakContainer(KC0, "23.0.4"));
-        containers.add(new TestKeycloakContainer(KC1, "18.0.0"));
+        containers.add(new TestKeycloakContainer(KC1, "23.0.4"));
 
         containers.forEach(this::startContainer);
 
