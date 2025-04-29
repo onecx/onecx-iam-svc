@@ -77,13 +77,8 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
         containers.forEach(this::startContainer);
 
         Map<String, String> result = new HashMap<>();
-        String isIntegrationTest = System.getProperty("isIntegrationTest", "false");
         containers.forEach(c -> {
-            if (Boolean.parseBoolean(isIntegrationTest)) {
-                result.put(urlProp(c.getName()), c.getInternalUrl());
-            } else {
-                result.put(urlProp(c.getName()), c.getServerUrl());
-            }
+            result.put(urlProp(c.getName()), c.getServerUrl());
         });
         return result;
     }
@@ -127,7 +122,6 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
             return name;
         }
 
-        //for IT
         public String getInternalUrl() {
             boolean useHttps = false;
             return String.format("%s://%s:%d",
