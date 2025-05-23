@@ -4,10 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.tkit.onecx.iam.test.RealmFactory.createRealm;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RealmRepresentation;
@@ -16,16 +13,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.utility.DockerImageName;
 
+import io.quarkus.test.common.DevServicesContext;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 import io.quarkus.test.keycloak.server.KeycloakContainer;
 
-public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager {
+public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager,
+        DevServicesContext.ContextAware {
 
+    private Optional<String> containerNetworkId;
     public static final String KC0 = "kc0";
     public static final String KC1 = "kc1";
     private static final Logger log = LoggerFactory.getLogger(KeycloakTestResource.class);
     private static final String KEYCLOAK_REALM = "quarkus";
     private final List<TestKeycloakContainer> containers = new ArrayList<>();
+
+    @Override
+    public void setIntegrationTestContext(DevServicesContext context) {
+        containerNetworkId = context.containerNetworkId();
+    }
 
     public static String authServerUrlProp(String name) {
         return name + ".auth-server-url";
@@ -45,7 +50,8 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
 
     private static void postRealm(String url, RealmRepresentation realm) {
         try {
-            given().auth().oauth2(getAdminAccessToken(url))
+            var token = getAdminAccessToken(url);
+            given().auth().oauth2(token)
                     .contentType("application/json")
                     .body(JsonSerialization.writeValueAsString(realm))
                     .when()
@@ -71,8 +77,13 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
     @Override
     public Map<String, String> start() {
 
-        containers.add(new TestKeycloakContainer(KC0, "23.0.4"));
-        containers.add(new TestKeycloakContainer(KC1, "18.0.0"));
+        var container1 = new TestKeycloakContainer(KC0, "23.0.4");
+        containerNetworkId.ifPresent(container1::withNetworkMode);
+        containers.add(container1);
+
+        var container2 = new TestKeycloakContainer(KC1, "18.0.0");
+        containerNetworkId.ifPresent(container2::withNetworkMode);
+        containers.add(container2);
 
         containers.forEach(this::startContainer);
 
@@ -114,6 +125,8 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
 
         public TestKeycloakContainer(String name, String version) {
             super(DockerImageName.parse("quay.io/keycloak/keycloak:" + version));
+            this.withEnv("KEYCLOAK_ADMIN", "admin");
+            this.withEnv("KEYCLOAK_ADMIN_PASSWORD", "admin");
             this.name = name;
             this.withNetworkAliases(name);
         }
