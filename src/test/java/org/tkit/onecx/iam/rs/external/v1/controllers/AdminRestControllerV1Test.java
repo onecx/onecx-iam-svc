@@ -20,16 +20,11 @@ import gen.org.tkit.onecx.iam.v1.model.UserRolesResponseDTOV1;
 import gen.org.tkit.onecx.iam.v1.model.UserRolesSearchRequestDTOV1;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.keycloak.client.KeycloakTestClient;
 
 @QuarkusTest
 @TestHTTPEndpoint(AdminRestControllerV1.class)
 @GenerateKeycloakClient(clientName = "testClient", scopes = { "ocx-ia:read", "ocx-ia:write" })
 class AdminRestControllerV1Test extends AbstractTest {
-
-    private static final KeycloakTestClient keycloakAuthClient = new KeycloakTestClient();
-    KeycloakTestClient keycloakClient = createClient();
-    KeycloakTestClient keycloakClient1 = createClient1();
 
     @Test
     void getUserRolesTest() throws IOException {
@@ -50,7 +45,7 @@ class AdminRestControllerV1Test extends AbstractTest {
         JSONObject jwt1 = mapper.readValue(body1, JSONObject.class);
 
         var result = given()
-                .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
                 .pathParam("userId", id)
                 .body(new UserRolesSearchRequestDTOV1().issuer(jwt.get("iss").toString()))
@@ -63,7 +58,7 @@ class AdminRestControllerV1Test extends AbstractTest {
 
         //user not found:
         given()
-                .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
                 .body(new UserRolesSearchRequestDTOV1().issuer(jwt1.get("iss").toString().replace("quarkus", "master")))
                 .pathParam("userId", id)
@@ -72,7 +67,7 @@ class AdminRestControllerV1Test extends AbstractTest {
 
         //no token test
         given()
-                .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .body(new UserRolesSearchRequestDTOV1().issuer(""))
                 .pathParam("userId", id)
                 .contentType(APPLICATION_JSON).post()

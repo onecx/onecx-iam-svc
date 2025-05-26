@@ -16,7 +16,7 @@ import org.tkit.quarkus.log.cdi.LogExclude;
 import gen.org.tkit.onecx.iam.internal.model.DomainDTO;
 import gen.org.tkit.onecx.iam.internal.model.ProviderDTO;
 import gen.org.tkit.onecx.iam.internal.model.ProvidersResponseDTO;
-import io.quarkus.keycloak.admin.client.common.KeycloakAdminClientConfig;
+import io.quarkus.keycloak.admin.client.common.runtime.KeycloakAdminClientConfig;
 
 @ApplicationScoped
 public class KeycloakUserService {
@@ -25,9 +25,6 @@ public class KeycloakUserService {
 
     @Inject
     KcConfig kcConfig;
-
-    @Inject
-    KeycloakUtil keycloakUtil;
 
     private Keycloak keycloakClient;
 
@@ -44,7 +41,7 @@ public class KeycloakUserService {
 
     public DomainDTO getCurrentDomain() {
         var principalToken = principalToken();
-        return new DomainDTO().name(keycloakUtil.getDomainFromIssuer(principalToken.getIssuer()));
+        return new DomainDTO().name(KeycloakUtil.getDomainFromIssuer(principalToken.getIssuer()));
     }
 
     public String getCurrentIssuer() {

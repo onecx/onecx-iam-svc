@@ -9,10 +9,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.MappingsRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.tkit.onecx.iam.domain.config.KcConfig;
@@ -20,12 +20,7 @@ import org.tkit.onecx.iam.domain.model.Page;
 import org.tkit.onecx.iam.domain.model.PageResult;
 import org.tkit.onecx.iam.domain.model.RoleSearchCriteria;
 import org.tkit.onecx.iam.domain.model.UserSearchCriteria;
-import org.tkit.quarkus.context.ApplicationContext;
 import org.tkit.quarkus.log.cdi.LogService;
-
-import gen.org.tkit.onecx.iam.internal.model.DomainDTO;
-import gen.org.tkit.onecx.iam.internal.model.ProviderDTO;
-import gen.org.tkit.onecx.iam.internal.model.ProvidersResponseDTO;
 
 @LogService
 @ApplicationScoped
@@ -33,9 +28,6 @@ public class KeycloakAdminService {
 
     @Inject
     KeycloakClientFactory keycloakClientFactory;
-
-    @Inject
-    KeycloakUtil keycloakUtil;
 
     @Inject
     KcConfig kcConfig;
@@ -58,8 +50,8 @@ public class KeycloakAdminService {
 
     public PageResult<RoleRepresentation> searchRoles(String issuer, RoleSearchCriteria criteria) {
         try {
-            var provider = keycloakUtil.getProviderFromIssuer(issuer);
-            var domain = keycloakUtil.getDomainFromIssuer(issuer);
+            var provider = getProviderFromIssuer(issuer);
+            var domain = KeycloakUtil.getDomainFromIssuer(issuer);
             var first = criteria.getPageNumber() * criteria.getPageSize();
             var count = 0;
 
@@ -74,8 +66,8 @@ public class KeycloakAdminService {
 
     public PageResult<UserRepresentation> searchUsers(String issuer, UserSearchCriteria criteria) {
         try {
-            var provider = keycloakUtil.getProviderFromIssuer(issuer);
-            var domain = keycloakUtil.getDomainFromIssuer(issuer);
+            var provider = getProviderFromIssuer(issuer);
+            var domain = KeycloakUtil.getDomainFromIssuer(issuer);
             if (criteria.getUserId() != null && !criteria.getUserId().isBlank()) {
                 var user = getUserById(criteria.getUserId(), provider, domain);
                 return new PageResult<>(user.size(), user, Page.of(0, 1));
@@ -110,8 +102,8 @@ public class KeycloakAdminService {
 
     public List<RoleRepresentation> getUserRoles(String issuer, String userId) {
         try {
-            var provider = keycloakUtil.getProviderFromIssuer(issuer);
-            var domain = keycloakUtil.getDomainFromIssuer(issuer);
+            var provider = getProviderFromIssuer(issuer);
+            var domain = KeycloakUtil.getDomainFromIssuer(issuer);
             MappingsRepresentation roles = keycloakClients.get(provider).realm(domain)
                     .users().get(userId).roles().getAll();
             return roles.getRealmMappings();
@@ -120,55 +112,17 @@ public class KeycloakAdminService {
         }
     }
 
-    public String getCurrentProviderKey() {
-        var principalToken = principalToken();
-        var issuerHost = principalToken.getIssuer();
+    public Map<String, List<RealmRepresentation>> findAllRealms() {
+        Map<String, List<RealmRepresentation>> realms = new HashMap<>();
+        kcConfig.keycloaks().forEach((s, clientConfig) -> realms.put(s, keycloakClients.get(s).realms().findAll()));
+        return realms;
+    }
+
+    String getProviderFromIssuer(String issuer) {
         return kcConfig.keycloaks().entrySet().stream()
-                .filter(entry -> issuerHost.startsWith(entry.getValue().issuerHost()))
+                .filter(entry -> issuer.startsWith(entry.getValue().issuerHost()))
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
-    }
-
-    public ProvidersResponseDTO getAllProviderAndDomains() {
-        var tokenProviderKey = getCurrentProviderKey();
-        ProvidersResponseDTO providersResponseDTO = new ProvidersResponseDTO();
-
-        kcConfig.keycloaks().forEach((s, clientConfig) -> {
-            ProviderDTO provider = new ProviderDTO();
-            provider.setName(s);
-            provider.setDescription(clientConfig.description().orElse(null));
-            provider.setFromToken(tokenProviderKey.equals(s));
-            provider.setDomains(getDomains(s, clientConfig.issuerHost()));
-            provider.setDescription(clientConfig.displayName());
-            providersResponseDTO.addProvidersItem(provider);
-        });
-        return providersResponseDTO;
-    }
-
-    public List<DomainDTO> getDomains(String provider, String issuerHost) {
-        var domains = keycloakClients.get(provider).realms().findAll();
-        List<DomainDTO> domainDtos = new ArrayList<>();
-        domains.forEach(realmRepresentation -> {
-            var domain = new DomainDTO();
-            domain.setName(realmRepresentation.getRealm());
-            domain.setDisplayName(realmRepresentation.getDisplayName());
-            domain.setIssuer(keycloakUtil.buildIssuerFromHostAndDomain(issuerHost, realmRepresentation.getRealm()));
-            domainDtos.add(domain);
-        });
-        return domainDtos;
-    }
-
-    public String validateIssuer(String issuer) {
-        return keycloakUtil.getProviderFromIssuer(issuer);
-    }
-
-    private JsonWebToken principalToken() {
-        var context = ApplicationContext.get();
-        var principalToken = context.getPrincipalToken();
-        if (principalToken == null) {
-            throw new KeycloakException("Principal token is required");
-        }
-        return principalToken;
     }
 }

@@ -18,14 +18,11 @@ import gen.org.tkit.onecx.iam.internal.model.ProvidersResponseDTO;
 import gen.org.tkit.onecx.iam.internal.model.UserResetPasswordRequestDTO;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.keycloak.client.KeycloakTestClient;
 
 @QuarkusTest
 @TestHTTPEndpoint(UserRestController.class)
 @GenerateKeycloakClient(clientName = "testClient", scopes = { "ocx-ia:read", "ocx-ia:write", "ocx-ia:all" })
-public class UserRestControllerTest extends AbstractTest {
-    KeycloakTestClient authClient = new KeycloakTestClient();
-    KeycloakTestClient keycloakClient = createClient();
+class UserRestControllerTest extends AbstractTest {
 
     @Test
     void resetPasswordTest() {
