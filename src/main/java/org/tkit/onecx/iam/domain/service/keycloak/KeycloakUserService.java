@@ -26,9 +26,6 @@ public class KeycloakUserService {
     @Inject
     KcConfig kcConfig;
 
-    @Inject
-    KeycloakUtil keycloakUtil;
-
     private Keycloak keycloakClient;
 
     public void createClient() {
@@ -44,7 +41,7 @@ public class KeycloakUserService {
 
     public DomainDTO getCurrentDomain() {
         var principalToken = principalToken();
-        return new DomainDTO().name(keycloakUtil.getDomainFromIssuer(principalToken.getIssuer()));
+        return new DomainDTO().name(KeycloakUtil.getDomainFromIssuer(principalToken.getIssuer()));
     }
 
     public String getCurrentIssuer() {

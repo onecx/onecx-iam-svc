@@ -24,23 +24,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gen.org.tkit.onecx.iam.internal.model.*;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.keycloak.client.KeycloakTestClient;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 @TestHTTPEndpoint(AdminRestController.class)
 @GenerateKeycloakClient(clientName = "testClient", scopes = { "ocx-ia:read", "ocx-ia:write", "ocx-ia:all" })
-public class AdminRestControllerTest extends AbstractTest {
-    KeycloakTestClient authClient = new KeycloakTestClient();
-    KeycloakTestClient keycloakClient = createClient();
-    KeycloakTestClient keycloakClient1 = createClient1();
+class AdminRestControllerTest extends AbstractTest {
 
     @Test
     void getAllKeycloaksAndRealms_Test() {
-        var kc0_token = this.getTokens(keycloakClient, USER_ALICE).getIdToken();
+        var kc0Token = this.getTokens(keycloakClient, USER_ALICE).getIdToken();
         var res = given().when()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
-                .header(APM_HEADER_TOKEN, kc0_token)
+                .header(APM_HEADER_TOKEN, kc0Token)
                 .contentType(ContentType.JSON)
                 .get("/providers")
                 .then()
@@ -48,12 +44,12 @@ public class AdminRestControllerTest extends AbstractTest {
                 .extract().as(ProvidersResponseDTO.class);
         Assertions.assertNotNull(res);
         Assertions.assertEquals(2, res.getProviders().size());
-        kc0_token = this.getTokens(keycloakClient1, USER_ALICE).getIdToken();
+        kc0Token = this.getTokens(keycloakClient1, USER_ALICE).getIdToken();
 
         //test different kc client
         res = given().when()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
-                .header(APM_HEADER_TOKEN, kc0_token)
+                .header(APM_HEADER_TOKEN, kc0Token)
                 .contentType(ContentType.JSON)
                 .get("/providers")
                 .then()

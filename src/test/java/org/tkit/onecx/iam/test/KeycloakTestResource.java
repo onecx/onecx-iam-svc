@@ -6,11 +6,14 @@ import static org.tkit.onecx.iam.test.RealmFactory.createRealm;
 import java.io.IOException;
 import java.util.*;
 
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.util.JsonSerialization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.test.common.DevServicesContext;
@@ -20,7 +23,8 @@ import io.quarkus.test.keycloak.server.KeycloakContainer;
 public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager,
         DevServicesContext.ContextAware {
 
-    private Optional<String> containerNetworkId;
+    private String containerNetworkId = null;
+
     public static final String KC0 = "kc0";
     public static final String KC1 = "kc1";
     private static final Logger log = LoggerFactory.getLogger(KeycloakTestResource.class);
@@ -29,7 +33,7 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
 
     @Override
     public void setIntegrationTestContext(DevServicesContext context) {
-        containerNetworkId = context.containerNetworkId();
+        containerNetworkId = context.containerNetworkId().orElse(null);
     }
 
     public static String authServerUrlProp(String name) {
@@ -40,12 +44,8 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
         return name + ".url";
     }
 
-    private static void deleteRealm(String url, String name) {
-        given().auth().oauth2(getAdminAccessToken(url))
-                .when()
-                .delete(url + "/admin/realms/" + name)
-                .then()
-                .statusCode(204);
+    public static String urlClientProp(String name) {
+        return name + ".client.url";
     }
 
     private static void postRealm(String url, RealmRepresentation realm) {
@@ -76,20 +76,19 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
 
     @Override
     public Map<String, String> start() {
+        var n = new JoinNetwork();
+        var container0 = new TestKeycloakContainer(n, KC0, "23.0.4");
+        containers.add(container0);
 
-        var container1 = new TestKeycloakContainer(KC0, "23.0.4");
-        containerNetworkId.ifPresent(container1::withNetworkMode);
+        var container1 = new TestKeycloakContainer(n, KC1, "18.0.0");
         containers.add(container1);
-
-        var container2 = new TestKeycloakContainer(KC1, "18.0.0");
-        containerNetworkId.ifPresent(container2::withNetworkMode);
-        containers.add(container2);
 
         containers.forEach(this::startContainer);
 
         Map<String, String> result = new HashMap<>();
         containers.forEach(c -> {
-            result.put(urlProp(c.getName()), c.getServerUrl());
+            result.put(urlClientProp(c.getName()), c.getServerUrl());
+            result.put(urlProp(c.getName()), containerNetworkId == null ? c.getServerUrl() : c.getInternalUrl());
         });
         return result;
     }
@@ -111,7 +110,6 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
     public void stop() {
         containers.forEach(k -> {
             try {
-                deleteRealm(k.getServerUrl(), KEYCLOAK_REALM);
                 k.stop();
             } catch (Exception ex) {
                 log.error("Error stopping container {}", k, ex);
@@ -123,18 +121,20 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
 
         private final String name;
 
-        public TestKeycloakContainer(String name, String version) {
+        public TestKeycloakContainer(Network n, String name, String version) {
             super(DockerImageName.parse("quay.io/keycloak/keycloak:" + version));
             this.withEnv("KEYCLOAK_ADMIN", "admin");
             this.withEnv("KEYCLOAK_ADMIN_PASSWORD", "admin");
             this.name = name;
-            this.withNetworkAliases(name);
+            this.withNetwork(n);
+            this.setNetworkAliases(List.of(this.name));
         }
 
         public String getName() {
             return name;
         }
 
+        @Override
         public String getInternalUrl() {
             boolean useHttps = false;
             return String.format("%s://%s:%d",
@@ -142,4 +142,21 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
         }
     }
 
+    private class JoinNetwork implements Network {
+        @Override
+        public String getId() {
+            return containerNetworkId;
+        }
+
+        @SuppressWarnings("java:S1186")
+        @Override
+        public void close() {
+            // ignore
+        }
+
+        @Override
+        public Statement apply(Statement var1, Description var2) {
+            return null;
+        }
+    }
 }

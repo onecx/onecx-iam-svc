@@ -23,16 +23,22 @@ public abstract class AbstractTest {
     protected static final String APM_HEADER_TOKEN = "apm-principal-token";
     DevServicesContext testContext;
 
+    protected KeycloakTestClient authClient = new KeycloakTestClient();
+
+    protected KeycloakTestClient keycloakClient = createClient();
+
     protected String getClientId() {
         return getPropertyValue(CLIENT_ID_PROP, "quarkus-app");
     }
 
     protected KeycloakTestClient createClient() {
-        return new KeycloakTestClient(getPropertyValue(urlProp(KC0), null));
+        return new KeycloakTestClient(getPropertyValue(urlClientProp(KC0), null));
     }
 
+    protected KeycloakTestClient keycloakClient1 = createClient1();
+
     protected KeycloakTestClient createClient1() {
-        return new KeycloakTestClient(getPropertyValue(urlProp(KC1), null));
+        return new KeycloakTestClient(getPropertyValue(urlClientProp(KC1), null));
     }
 
     protected String getPropertyValue(String prop, String defaultValue) {
