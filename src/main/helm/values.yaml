@@ -1,5 +1,5 @@
 app:
-  name: iam-svc
+  name: svc
   image:
     repository: "onecx/onecx-iam-svc"
   db:
