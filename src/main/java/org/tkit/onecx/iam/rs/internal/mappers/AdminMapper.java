@@ -12,6 +12,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.mapstruct.*;
 import org.tkit.onecx.iam.domain.config.KcConfig;
 import org.tkit.onecx.iam.domain.model.PageResult;
+import org.tkit.onecx.iam.domain.model.ProviderDomain;
 import org.tkit.onecx.iam.domain.model.RoleSearchCriteria;
 import org.tkit.onecx.iam.domain.model.UserSearchCriteria;
 import org.tkit.onecx.iam.domain.service.keycloak.KeycloakUtil;
@@ -67,12 +68,12 @@ public interface AdminMapper {
     UserSearchCriteria map(UserSearchCriteriaDTO dto);
 
     @Mapping(target = "removeStreamItem", ignore = true)
-    UserPageResultDTO map(PageResult<UserRepresentation> usersPage, @Context String domain, @Context String provider);
+    UserPageResultDTO map(PageResult<UserRepresentation> usersPage, @Context ProviderDomain providerAndDomain);
 
     @Mapping(target = "removeAttributesItem", ignore = true)
-    @Mapping(target = "domain", expression = "java(domain)")
-    @Mapping(target = "provider", expression = "java(provider)")
-    UserDTO map(UserRepresentation user, @Context String domain, @Context String provider);
+    @Mapping(target = "domain", expression = "java(providerAndDomain.getDomain())")
+    @Mapping(target = "provider", expression = "java(providerAndDomain.getProvider())")
+    UserDTO map(UserRepresentation user, @Context ProviderDomain providerAndDomain);
 
     default OffsetDateTime map(Long dateTime) {
         if (dateTime == null) {

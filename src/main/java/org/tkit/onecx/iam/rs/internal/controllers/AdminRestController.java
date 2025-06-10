@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import org.tkit.onecx.iam.domain.config.KcConfig;
+import org.tkit.onecx.iam.domain.model.ProviderDomain;
 import org.tkit.onecx.iam.domain.service.keycloak.KeycloakAdminService;
 import org.tkit.onecx.iam.domain.service.keycloak.KeycloakException;
 import org.tkit.onecx.iam.domain.service.keycloak.KeycloakUtil;
@@ -79,9 +80,10 @@ public class AdminRestController implements AdminInternalApi {
     public Response searchUsersByCriteria(UserSearchCriteriaDTO userSearchCriteriaDTO) {
         var criteria = mapper.map(userSearchCriteriaDTO);
         var usersPage = adminService.searchUsers(userSearchCriteriaDTO.getIssuer(), criteria);
-        var domain = KeycloakUtil.getDomainFromIssuer(userSearchCriteriaDTO.getIssuer());
-        var provider = adminService.getProviderFromIssuer(userSearchCriteriaDTO.getIssuer());
-        return Response.ok(mapper.map(usersPage, domain, provider)).build();
+        var providerAndDomain = new ProviderDomain();
+        providerAndDomain.setDomain(KeycloakUtil.getDomainFromIssuer(userSearchCriteriaDTO.getIssuer()));
+        providerAndDomain.setProvider(adminService.getProviderFromIssuer(userSearchCriteriaDTO.getIssuer()));
+        return Response.ok(mapper.map(usersPage, providerAndDomain)).build();
     }
 
     @ServerExceptionMapper
