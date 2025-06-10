@@ -118,7 +118,7 @@ public class KeycloakAdminService {
         return realms;
     }
 
-    String getProviderFromIssuer(String issuer) {
+    public String getProviderFromIssuer(String issuer) {
         return kcConfig.keycloaks().entrySet().stream()
                 .filter(entry -> issuer.startsWith(entry.getValue().issuerHost()))
                 .map(Map.Entry::getKey)

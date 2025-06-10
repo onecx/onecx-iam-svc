@@ -67,11 +67,12 @@ public interface AdminMapper {
     UserSearchCriteria map(UserSearchCriteriaDTO dto);
 
     @Mapping(target = "removeStreamItem", ignore = true)
-    UserPageResultDTO map(PageResult<UserRepresentation> usersPage, @Context String realm);
+    UserPageResultDTO map(PageResult<UserRepresentation> usersPage, @Context String domain, @Context String provider);
 
     @Mapping(target = "removeAttributesItem", ignore = true)
-    @Mapping(target = "domain", expression = "java(realm)")
-    UserDTO map(UserRepresentation user, @Context String realm);
+    @Mapping(target = "domain", expression = "java(domain)")
+    @Mapping(target = "provider", expression = "java(provider)")
+    UserDTO map(UserRepresentation user, @Context String domain, @Context String provider);
 
     default OffsetDateTime map(Long dateTime) {
         if (dateTime == null) {
