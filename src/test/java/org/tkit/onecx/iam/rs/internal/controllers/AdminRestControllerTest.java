@@ -302,6 +302,8 @@ class AdminRestControllerTest extends AbstractTest {
                 .extract()
                 .body().as(UserPageResultDTO.class);
         Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertNotNull(result.getStream().get(0).getDomain());
+        Assertions.assertNotNull(result.getStream().get(0).getProvider());
 
         //search in wrong kc => user with given id does not exist
         dto.setIssuer(jwt1.get("iss").toString());
