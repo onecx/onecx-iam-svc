@@ -2,7 +2,6 @@ package org.tkit.onecx.iam.rs.internal.controllers;
 
 import java.util.Map;
 
-import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -23,6 +22,7 @@ import org.tkit.quarkus.rs.context.token.TokenException;
 
 import gen.org.tkit.onecx.iam.internal.AdminInternalApi;
 import gen.org.tkit.onecx.iam.internal.model.*;
+import io.quarkus.logging.Log;
 
 @LogService
 @ApplicationScoped
