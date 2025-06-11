@@ -2,6 +2,7 @@ package org.tkit.onecx.iam.rs.internal.controllers;
 
 import java.util.Map;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -41,6 +42,7 @@ public class AdminRestController implements AdminInternalApi {
 
     @Override
     public Response getAllProviders() {
+        Log.info("getting all providers");
         // token information
         var context = ApplicationContext.get();
         var principalToken = context.getPrincipalToken();
@@ -57,6 +59,7 @@ public class AdminRestController implements AdminInternalApi {
                 .findFirst()
                 .orElse(null);
 
+        Log.info("loading domains...");
         // load all realms/domains
         var realms = adminService.findAllRealms();
 
