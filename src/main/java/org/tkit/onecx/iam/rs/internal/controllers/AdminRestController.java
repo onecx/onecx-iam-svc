@@ -22,10 +22,8 @@ import org.tkit.quarkus.rs.context.token.TokenException;
 
 import gen.org.tkit.onecx.iam.internal.AdminInternalApi;
 import gen.org.tkit.onecx.iam.internal.model.*;
-import lombok.extern.slf4j.Slf4j;
 
 @LogService
-@Slf4j
 @ApplicationScoped
 public class AdminRestController implements AdminInternalApi {
 
@@ -43,7 +41,6 @@ public class AdminRestController implements AdminInternalApi {
 
     @Override
     public Response getAllProviders() {
-        log.info("getting all providers");
         // token information
         var context = ApplicationContext.get();
         var principalToken = context.getPrincipalToken();
@@ -60,7 +57,6 @@ public class AdminRestController implements AdminInternalApi {
                 .findFirst()
                 .orElse(null);
 
-        log.info("loading domains...");
         // load all realms/domains
         var realms = adminService.findAllRealms();
 
