@@ -17,15 +17,14 @@ import org.tkit.onecx.iam.domain.service.keycloak.KeycloakUtil;
 import org.tkit.onecx.iam.rs.internal.mappers.AdminMapper;
 import org.tkit.onecx.iam.rs.internal.mappers.ExceptionMapper;
 import org.tkit.quarkus.context.ApplicationContext;
+import org.tkit.quarkus.log.cdi.LogExclude;
 import org.tkit.quarkus.log.cdi.LogService;
 import org.tkit.quarkus.rs.context.token.TokenException;
 
 import gen.org.tkit.onecx.iam.internal.AdminInternalApi;
 import gen.org.tkit.onecx.iam.internal.model.*;
-import lombok.extern.slf4j.Slf4j;
 
 @LogService
-@Slf4j
 @ApplicationScoped
 public class AdminRestController implements AdminInternalApi {
 
@@ -42,8 +41,25 @@ public class AdminRestController implements AdminInternalApi {
     KcConfig kcConfig;
 
     @Override
+    public Response assignUserRole(String userId, RoleAssignmentRequestDTO roleAssignmentRequestDTO) {
+        adminService.assignRole(userId, roleAssignmentRequestDTO);
+        return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @Override
+    public Response createRole(CreateRoleRequestDTO createRoleRequestDTO) {
+        adminService.createRole(createRoleRequestDTO);
+        return Response.status(Response.Status.CREATED).build();
+    }
+
+    @Override
+    @LogExclude(mask = "***")
+    public Response createUser(CreateUserRequestDTO createUserRequestDTO) {
+        return adminService.createUser(createUserRequestDTO);
+    }
+
+    @Override
     public Response getAllProviders() {
-        log.info("getting all providers");
         // token information
         var context = ApplicationContext.get();
         var principalToken = context.getPrincipalToken();
@@ -60,7 +76,6 @@ public class AdminRestController implements AdminInternalApi {
                 .findFirst()
                 .orElse(null);
 
-        log.info("loading domains...");
         // load all realms/domains
         var realms = adminService.findAllRealms();
 
@@ -88,6 +103,12 @@ public class AdminRestController implements AdminInternalApi {
         providerAndDomain.setDomain(KeycloakUtil.getDomainFromIssuer(userSearchCriteriaDTO.getIssuer()));
         providerAndDomain.setProvider(adminService.getProviderFromIssuer(userSearchCriteriaDTO.getIssuer()));
         return Response.ok(mapper.map(usersPage, providerAndDomain)).build();
+    }
+
+    @Override
+    public Response updateUser(String userId, UpdateUserRequestDTO updateUserRequestDTO) {
+        adminService.updateUser(userId, updateUserRequestDTO);
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @ServerExceptionMapper
