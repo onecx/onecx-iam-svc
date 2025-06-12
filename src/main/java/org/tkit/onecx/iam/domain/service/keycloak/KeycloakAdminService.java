@@ -8,19 +8,23 @@ import java.util.Map;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.idm.MappingsRepresentation;
-import org.keycloak.representations.idm.RealmRepresentation;
-import org.keycloak.representations.idm.RoleRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.*;
 import org.tkit.onecx.iam.domain.config.KcConfig;
 import org.tkit.onecx.iam.domain.model.Page;
 import org.tkit.onecx.iam.domain.model.PageResult;
 import org.tkit.onecx.iam.domain.model.RoleSearchCriteria;
 import org.tkit.onecx.iam.domain.model.UserSearchCriteria;
+import org.tkit.onecx.iam.rs.internal.mappers.AdminMapper;
 import org.tkit.quarkus.log.cdi.LogService;
+
+import gen.org.tkit.onecx.iam.internal.model.CreateRoleRequestDTO;
+import gen.org.tkit.onecx.iam.internal.model.CreateUserRequestDTO;
+import gen.org.tkit.onecx.iam.internal.model.RoleAssignmentRequestDTO;
+import gen.org.tkit.onecx.iam.internal.model.UpdateUserRequestDTO;
 
 @LogService
 @ApplicationScoped
@@ -31,6 +35,9 @@ public class KeycloakAdminService {
 
     @Inject
     KcConfig kcConfig;
+
+    @Inject
+    AdminMapper adminMapper;
 
     private Map<String, Keycloak> keycloakClients = new HashMap<>();
 
@@ -124,5 +131,44 @@ public class KeycloakAdminService {
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public Response createUser(CreateUserRequestDTO createUserRequestDTO) {
+        var targetProviderKey = getProviderFromIssuer(createUserRequestDTO.getIssuer());
+        var userToCreate = adminMapper.createUser(createUserRequestDTO);
+        var credentials = new CredentialRepresentation();
+        credentials.setType(CredentialRepresentation.PASSWORD);
+        credentials.setValue(createUserRequestDTO.getTemporaryPassword());
+        credentials.setTemporary(true);
+        userToCreate.setCredentials(List.of(credentials));
+        try (Response res = keycloakClients.get(targetProviderKey)
+                .realm(KeycloakUtil.getDomainFromIssuer(createUserRequestDTO.getIssuer())).users().create(userToCreate)) {
+            return Response.status(res.getStatus()).build();
+        }
+    }
+
+    public void updateUser(String userId, UpdateUserRequestDTO updateUserRequestDTO) {
+        var targetProviderKey = getProviderFromIssuer(updateUserRequestDTO.getIssuer());
+        var targetDomain = KeycloakUtil.getDomainFromIssuer(updateUserRequestDTO.getIssuer());
+        var targetUser = adminMapper.updateUser(updateUserRequestDTO);
+        keycloakClients.get(targetProviderKey).realm(targetDomain).users().get(userId).update(targetUser);
+    }
+
+    public void createRole(CreateRoleRequestDTO createRoleRequestDTO) {
+        var targetProviderKey = getProviderFromIssuer(createRoleRequestDTO.getIssuer());
+        var targetDomain = KeycloakUtil.getDomainFromIssuer(createRoleRequestDTO.getIssuer());
+        var role = adminMapper.createRole(createRoleRequestDTO);
+        keycloakClients.get(targetProviderKey).realm(targetDomain).roles().create(role);
+    }
+
+    public void assignRole(String userId, RoleAssignmentRequestDTO roleAssignmentRequestDTO) {
+        var targetProviderKey = getProviderFromIssuer(roleAssignmentRequestDTO.getIssuer());
+        var targetDomain = KeycloakUtil.getDomainFromIssuer(roleAssignmentRequestDTO.getIssuer());
+        var availableRoles = keycloakClients.get(targetProviderKey).realm(targetDomain).roles().list();
+        var targetRole = availableRoles.stream()
+                .filter(roleRepresentation -> roleRepresentation.getName().equals(roleAssignmentRequestDTO.getName()))
+                .findFirst();
+        targetRole.ifPresent(role -> keycloakClients.get(targetProviderKey).realm(targetDomain).users().get(userId).roles()
+                .realmLevel().add(List.of(role)));
     }
 }

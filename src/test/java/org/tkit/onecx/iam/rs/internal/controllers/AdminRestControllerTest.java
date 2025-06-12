@@ -8,6 +8,9 @@ import static org.tkit.quarkus.rs.context.token.TokenParserService.ErrorKeys.ERR
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.ws.rs.core.Response;
 
@@ -143,6 +146,72 @@ class AdminRestControllerTest extends AbstractTest {
     }
 
     @Test
+    void createRoleAndAssignToUserTest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+        var iss = jwt.get("iss").toString();
+
+        var requestDTO = new CreateRoleRequestDTO().issuer(iss).name("newRole").description("myNewRole");
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(requestDTO)
+                .post("/roles")
+                .then()
+                .statusCode(Response.Status.CREATED.getStatusCode());
+
+        //search for new role
+        var result = given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(new RoleSearchCriteriaDTO().name("newRole").issuer(iss))
+                .post("/roles/search")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .body().as(RolePageResultDTO.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getStream()).isNotNull()
+                .hasSize(1);
+
+        RoleAssignmentRequestDTO roleAssignmentRequestDTO = new RoleAssignmentRequestDTO();
+        roleAssignmentRequestDTO.setIssuer(iss);
+        roleAssignmentRequestDTO.setName("newRole");
+
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(roleAssignmentRequestDTO)
+                .post("/" + jwt.get("sub").toString() + "/roles/assign")
+                .then()
+                .statusCode(Response.Status.NO_CONTENT.getStatusCode());
+
+        // get user roles and check for new assigned role
+        var userRolesResult = given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .contentType(APPLICATION_JSON)
+                .pathParam("userId", jwt.get("sub").toString())
+                .body(new UserRolesSearchRequestDTO().issuer(jwt.get("iss").toString()))
+                .post("/{userId}/roles")
+                .then().statusCode(Response.Status.OK.getStatusCode())
+                .extract().as(UserRolesResponseDTO.class);
+        Assertions.assertNotNull(userRolesResult);
+        Assertions.assertEquals(3, userRolesResult.getRoles().size());
+        Assertions.assertNotNull(userRolesResult.getRoles().stream()
+                .filter(roleDTO -> roleDTO.getName().equals(roleAssignmentRequestDTO.getName())));
+    }
+
+    @Test
     void getUserRolesTest() throws IOException {
 
         var tokens = this.getTokens(keycloakClient, USER_ALICE);
@@ -165,7 +234,6 @@ class AdminRestControllerTest extends AbstractTest {
                 .then().statusCode(Response.Status.OK.getStatusCode())
                 .extract().as(UserRolesResponseDTO.class);
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(2, result.getRoles().size());
 
         //not existing kc and realm
         given()
@@ -373,5 +441,87 @@ class AdminRestControllerTest extends AbstractTest {
                 "searchUsersByCriteria.userSearchCriteriaDTO: must not be null",
                 exception.getDetail());
         Assertions.assertNotNull(exception.getInvalidParams());
+    }
+
+    @Test
+    void createAndUpdateUserTest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+
+        CreateUserRequestDTO requestDTO = new CreateUserRequestDTO().email("test@test.com").username("newUser").firstName("new")
+                .lastName("user").issuer(jwt.get("iss").toString());
+        requestDTO.setTemporaryPassword("testPassword");
+        requestDTO.setAttributes(Map.of("testAttribute", List.of("attr1")));
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
+                .body(requestDTO)
+                .post("/users")
+                .then()
+                .statusCode(Response.Status.CREATED.getStatusCode());
+
+        //search for new created user
+        UserSearchCriteriaDTO dto = new UserSearchCriteriaDTO();
+        dto.setUserName("newUser");
+        dto.setIssuer(jwt.get("iss").toString());
+
+        var result = given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
+                .body(dto)
+                .post("/users/search")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .body().as(UserPageResultDTO.class);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(requestDTO.getEmail(), result.getStream().get(0).getEmail());
+        Assertions.assertEquals(requestDTO.getAttributes().get("testAttribute").get(0),
+                result.getStream().get(0).getAttributes().get("testAttribute").get(0));
+
+        var updateDTO = new UpdateUserRequestDTO().email("updated@email.com").firstName("updatedFirstName")
+                .lastName("updatedLastName").issuer(jwt.get("iss").toString());
+        var attributes = new HashMap<String, List<String>>();
+        attributes.put("testAttribute", List.of("updatedAttribute"));
+        attributes.put("newAttribute", List.of("new1", "new2"));
+        updateDTO.setAttributes(attributes);
+        // update the user
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
+                .body(updateDTO)
+                .put("/users/" + result.getStream().get(0).getId())
+                .then()
+                .statusCode(Response.Status.NO_CONTENT.getStatusCode());
+
+        // search for user
+        result = given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
+                .body(dto)
+                .post("/users/search")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .body().as(UserPageResultDTO.class);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(updateDTO.getEmail(), result.getStream().get(0).getEmail());
+        Assertions.assertEquals(updateDTO.getFirstName(), result.getStream().get(0).getFirstName());
+        Assertions.assertEquals(updateDTO.getLastName(), result.getStream().get(0).getLastName());
+        Assertions.assertEquals(updateDTO.getAttributes().get("testAttribute").get(0),
+                result.getStream().get(0).getAttributes().get("testAttribute").get(0));
     }
 }

@@ -36,6 +36,59 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/users:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - AdminInternal
+   summary: create new user
+   operationId: createUser
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/CreateUserRequest'
+   responses:
+    201:
+     description: CREATED
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/users/{userId}:
+  put:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - AdminInternal
+   summary: update user
+   operationId: updateUser
+   parameters:
+    - name: userId
+      in: path
+      required: true
+      description: Keycloak userId
+      schema:
+       type: string
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/UpdateUserRequest'
+   responses:
+    204:
+     description: UPDATED
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
  /internal/admin/{userId}/roles:
   post:
    security:
@@ -69,6 +122,35 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/{userId}/roles/assign:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - AdminInternal
+   summary: Assign role to user
+   operationId: assignUserRole
+   parameters:
+    - name: userId
+      in: path
+      required: true
+      description: Keycloak userId
+      schema:
+       type: string
+   requestBody:
+    content:
+     "application/json":
+      schema:
+       $ref: '#/components/schemas/RoleAssignmentRequest'
+   responses:
+    204:
+     description: UPDATED
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
  /internal/admin/roles/search:
   post:
    security:
@@ -90,6 +172,29 @@ paths:
       "application/json":
        schema:
         $ref: "#/components/schemas/RolePageResult"
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/roles:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - AdminInternal
+   summary: Create a new role
+   operationId: createRole
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/CreateRoleRequest'
+   responses:
+    201:
+     description: CREATED
     400:
      description: Bad request
      content:
@@ -262,6 +367,75 @@ components:
      type: array
      items:
       $ref: '#/components/schemas/User'
+  CreateRoleRequest:
+   type: object
+   required:
+    - issuer
+    - name
+   properties:
+    issuer:
+     type: string
+    name:
+     type: string
+    description:
+     type: string
+  RoleAssignmentRequest:
+   type: object
+   required:
+    - issuer
+    - name
+   properties:
+    issuer:
+     type: string
+    name:
+     type: string
+  CreateUserRequest:
+   type: object
+   required:
+    - issuer
+    - username
+    - firstName
+    - lastName
+    - email
+    - temporaryPassword
+   properties:
+    issuer:
+     type: string
+    username:
+     type: string
+    firstName:
+     type: string
+    lastName:
+     type: string
+    email:
+     type: string
+    temporaryPassword:
+     type: string
+    attributes:
+     type: object
+     additionalProperties:
+      type: array
+      items:
+       type: string
+  UpdateUserRequest:
+   type: object
+   required:
+    - issuer
+   properties:
+    issuer:
+     type: string
+    firstName:
+     type: string
+    lastName:
+     type: string
+    email:
+     type: string
+    attributes:
+     type: object
+     additionalProperties:
+      type: array
+      items:
+       type: string
   User:
    type: object
    properties:
