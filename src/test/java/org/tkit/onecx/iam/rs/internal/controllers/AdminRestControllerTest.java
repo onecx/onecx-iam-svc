@@ -494,7 +494,6 @@ class AdminRestControllerTest extends AbstractTest {
         attributes.put("testAttribute", List.of("updatedAttribute"));
         attributes.put("newAttribute", List.of("new1", "new2"));
         updateDTO.setAttributes(attributes);
-        ;
         // update the user
         given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))

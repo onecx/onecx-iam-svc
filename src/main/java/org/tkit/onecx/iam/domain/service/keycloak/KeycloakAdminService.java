@@ -165,11 +165,9 @@ public class KeycloakAdminService {
         var targetProviderKey = getProviderFromIssuer(roleAssignmentRequestDTO.getIssuer());
         var targetDomain = KeycloakUtil.getDomainFromIssuer(roleAssignmentRequestDTO.getIssuer());
         var availableRoles = keycloakClients.get(targetProviderKey).realm(targetDomain).roles().list();
-        System.out.println("availableRoles: " + availableRoles.toString());
         var targetRole = availableRoles.stream()
                 .filter(roleRepresentation -> roleRepresentation.getName().equals(roleAssignmentRequestDTO.getName()))
                 .findFirst();
-        System.out.println("isPResent? " + targetRole.isPresent());
         targetRole.ifPresent(role -> keycloakClients.get(targetProviderKey).realm(targetDomain).users().get(userId).roles()
                 .realmLevel().add(List.of(role)));
     }
