@@ -184,7 +184,7 @@ class AdminRestControllerTest extends AbstractTest {
 
         RoleAssignmentRequestDTO roleAssignmentRequestDTO = new RoleAssignmentRequestDTO();
         roleAssignmentRequestDTO.setIssuer(iss);
-        roleAssignmentRequestDTO.setName("newRole");
+        roleAssignmentRequestDTO.setNames(List.of("newRole"));
 
         given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
@@ -208,7 +208,18 @@ class AdminRestControllerTest extends AbstractTest {
         Assertions.assertNotNull(userRolesResult);
         Assertions.assertEquals(3, userRolesResult.getRoles().size());
         Assertions.assertNotNull(userRolesResult.getRoles().stream()
-                .filter(roleDTO -> roleDTO.getName().equals(roleAssignmentRequestDTO.getName())));
+                .filter(roleDTO -> roleDTO.getName().equals(roleAssignmentRequestDTO.getNames().get(0))));
+
+        roleAssignmentRequestDTO.setNames(List.of("not-existing-role"));
+        // try to assign not existing role, should be ignored
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(roleAssignmentRequestDTO)
+                .post("/" + jwt.get("sub").toString() + "/roles/assign")
+                .then()
+                .statusCode(Response.Status.NO_CONTENT.getStatusCode());
     }
 
     @Test

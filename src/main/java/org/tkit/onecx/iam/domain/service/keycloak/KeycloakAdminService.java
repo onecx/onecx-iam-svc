@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -165,10 +166,12 @@ public class KeycloakAdminService {
         var targetProviderKey = getProviderFromIssuer(roleAssignmentRequestDTO.getIssuer());
         var targetDomain = KeycloakUtil.getDomainFromIssuer(roleAssignmentRequestDTO.getIssuer());
         var availableRoles = keycloakClients.get(targetProviderKey).realm(targetDomain).roles().list();
-        var targetRole = availableRoles.stream()
-                .filter(roleRepresentation -> roleRepresentation.getName().equals(roleAssignmentRequestDTO.getName()))
-                .findFirst();
-        targetRole.ifPresent(role -> keycloakClients.get(targetProviderKey).realm(targetDomain).users().get(userId).roles()
-                .realmLevel().add(List.of(role)));
+        List<RoleRepresentation> targetRoles = availableRoles.stream()
+                .filter(role -> roleAssignmentRequestDTO.getNames().contains(role.getName()))
+                .collect(Collectors.toList());
+        if (!targetRoles.isEmpty()) {
+            keycloakClients.get(targetProviderKey).realm(targetDomain).users().get(userId).roles()
+                    .realmLevel().add(targetRoles);
+        }
     }
 }
