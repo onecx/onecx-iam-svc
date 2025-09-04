@@ -1,13 +1,14 @@
 ---
 openapi: 3.0.3
 info:
- title: onecx-iam-svc V1
+ title: onecx-iam-svc external service V1
+ description: This API provides endpoints to retrieve user information of the requested identity management system
  version: 1.0.0
 servers:
  - url: "http://onecx-iam-svc:8080"
 tags:
  - name: AdminController
-   description: IAM admin controller
+   description: Managing user information as an admin.
 paths:
  /v1/{userId}/roles:
   post:
@@ -15,7 +16,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - AdminController
-   summary: Get roles of user by id
+   description: Get roles of an user by its id
    operationId: getUserRoles
    parameters:
     - name: userId
@@ -31,7 +32,7 @@ paths:
        $ref: '#/components/schemas/UserRolesSearchRequest'
    responses:
     200:
-     description: OK
+     description: Role retrieved successfully
      content:
       "application/json":
        schema:
