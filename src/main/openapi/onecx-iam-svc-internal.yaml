@@ -1,13 +1,16 @@
 ---
 openapi: 3.0.3
 info:
- title: onecx-iam-svc
+ title: onecx-iam-svc internal service
+ description: This API provides endpoints to perform operations on the Identity Management like Keycloak
  version: 1.0.0
 servers:
  - url: "http://onecx-iam-svc:8080"
 tags:
  - name: UsersInternal
-   description: Keycloak user internal service
+   description: Managing the requesting users IDM account
+ - name: adminInternal
+   description: Managing users of the used IDM
 paths:
  /internal/admin/users/search:
   post:
@@ -15,7 +18,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - AdminInternal
-   summary: Search users by criteria
+   description: Search users by search criteria
    operationId: searchUsersByCriteria
    requestBody:
     required: true
@@ -25,7 +28,7 @@ paths:
        $ref: '#/components/schemas/UserSearchCriteria'
    responses:
     200:
-     description: OK
+     description: User search results retrieved successfully
      content:
       "application/json":
        schema:
@@ -42,7 +45,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:write ]
    tags:
     - AdminInternal
-   summary: create new user
+   description: Create a new user in the used identity management system
    operationId: createUser
    requestBody:
     required: true
@@ -52,7 +55,7 @@ paths:
        $ref: '#/components/schemas/CreateUserRequest'
    responses:
     201:
-     description: CREATED
+     description: User created successfully
     400:
      description: Bad request
      content:
@@ -65,7 +68,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:write ]
    tags:
     - AdminInternal
-   summary: update user
+   description: Update a user by its id
    operationId: updateUser
    parameters:
     - name: userId
@@ -82,7 +85,7 @@ paths:
        $ref: '#/components/schemas/UpdateUserRequest'
    responses:
     204:
-     description: UPDATED
+     description: User updated successfully
     400:
      description: Bad request
      content:
@@ -95,7 +98,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - AdminInternal
-   summary: Get roles of user by id
+   description: Get all roles assigned to a user by its id
    operationId: getUserRoles
    parameters:
     - name: userId
@@ -111,7 +114,7 @@ paths:
        $ref: '#/components/schemas/UserRolesSearchRequest'
    responses:
     200:
-     description: OK
+     description: Roles retrieved successfully
      content:
       "application/json":
        schema:
@@ -128,7 +131,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:write ]
    tags:
     - AdminInternal
-   summary: Assign role to user
+   description: Assign roles to user by its id
    operationId: assignUserRole
    parameters:
     - name: userId
@@ -144,7 +147,7 @@ paths:
        $ref: '#/components/schemas/RoleAssignmentRequest'
    responses:
     204:
-     description: UPDATED
+     description: User roles updated successfully
     400:
      description: Bad request
      content:
@@ -157,7 +160,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - AdminInternal
-   summary: Search roles by criteria
+   description: Search roles by search criteria
    operationId: searchRolesByCriteria
    requestBody:
     required: true
@@ -167,7 +170,7 @@ paths:
        $ref: '#/components/schemas/RoleSearchCriteria'
    responses:
     200:
-     description: OK
+     description: Role search results retrieved successfully
      content:
       "application/json":
        schema:
@@ -184,7 +187,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:write ]
    tags:
     - AdminInternal
-   summary: Create a new role
+   description: Create a new role in the used identity management system
    operationId: createRole
    requestBody:
     required: true
@@ -194,7 +197,7 @@ paths:
        $ref: '#/components/schemas/CreateRoleRequest'
    responses:
     201:
-     description: CREATED
+     description: Role created successfully
     400:
      description: Bad request
      content:
@@ -207,11 +210,11 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - AdminInternal
-   summary: Get all providers
+   description: Get a list of all registered providers (instances of identity management systems)
    operationId: getAllProviders
    responses:
     200:
-     description: OK
+     description: Providers retrieved successfully
      content:
       application/json:
        schema:
@@ -228,7 +231,7 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:write ]
    tags:
     - UserInternal
-   summary: Reset user password
+   description: Reset the password of the requesting user
    operationId: resetPassword
    requestBody:
     required: true
@@ -238,7 +241,7 @@ paths:
        $ref: '#/components/schemas/UserResetPasswordRequest'
    responses:
     204:
-     description: Reset password succeeded
+     description: Password resetted successfully
     400:
      description: Bad request
      content:
@@ -251,11 +254,11 @@ paths:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
     - UserInternal
-   summary: Get user provider
+   description: Get the current used provider of the requesting user
    operationId: getUserProvider
    responses:
     200:
-     description: OK
+     description: Provider retrieved successfully
      content:
       "application/json":
        schema:
