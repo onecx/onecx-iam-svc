@@ -29,9 +29,12 @@ public interface AdminMapper {
             return result;
         }
         kcs.forEach((s, clientConfig) -> {
-            var domains = createDomains(realms.get(s), s, clientConfig.issuerHost());
-            result.addProvidersItem(createProvider(s, clientConfig.description().orElse(null), clientConfig.displayName(),
-                    tokenProviderKey.equals(s), domains));
+            List<DomainDTO> domains = null;
+            domains = createDomains(realms.get(s), s, clientConfig.issuerHost());
+            if (!domains.isEmpty()) {
+                result.addProvidersItem(createProvider(s, clientConfig.description().orElse(null), clientConfig.displayName(),
+                        tokenProviderKey.equals(s), domains));
+            }
         });
         return result;
     }

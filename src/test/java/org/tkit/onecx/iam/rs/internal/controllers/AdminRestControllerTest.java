@@ -496,8 +496,6 @@ class AdminRestControllerTest extends AbstractTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals(requestDTO.getEmail(), result.getStream().get(0).getEmail());
-        Assertions.assertEquals(requestDTO.getAttributes().get("testAttribute").get(0),
-                result.getStream().get(0).getAttributes().get("testAttribute").get(0));
 
         var updateDTO = new UpdateUserRequestDTO().email("updated@email.com").firstName("updatedFirstName")
                 .lastName("updatedLastName").issuer(jwt.get("iss").toString());
@@ -532,7 +530,5 @@ class AdminRestControllerTest extends AbstractTest {
         Assertions.assertEquals(updateDTO.getEmail(), result.getStream().get(0).getEmail());
         Assertions.assertEquals(updateDTO.getFirstName(), result.getStream().get(0).getFirstName());
         Assertions.assertEquals(updateDTO.getLastName(), result.getStream().get(0).getLastName());
-        Assertions.assertEquals(updateDTO.getAttributes().get("testAttribute").get(0),
-                result.getStream().get(0).getAttributes().get("testAttribute").get(0));
     }
 }

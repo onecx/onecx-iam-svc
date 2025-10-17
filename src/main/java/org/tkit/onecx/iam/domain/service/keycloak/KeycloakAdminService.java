@@ -25,6 +25,7 @@ import gen.org.tkit.onecx.iam.internal.model.CreateRoleRequestDTO;
 import gen.org.tkit.onecx.iam.internal.model.CreateUserRequestDTO;
 import gen.org.tkit.onecx.iam.internal.model.RoleAssignmentRequestDTO;
 import gen.org.tkit.onecx.iam.internal.model.UpdateUserRequestDTO;
+import io.quarkus.logging.Log;
 
 @LogService
 @ApplicationScoped
@@ -121,7 +122,14 @@ public class KeycloakAdminService {
 
     public Map<String, List<RealmRepresentation>> findAllRealms() {
         Map<String, List<RealmRepresentation>> realms = new HashMap<>();
-        kcConfig.keycloaks().forEach((s, clientConfig) -> realms.put(s, keycloakClients.get(s).realms().findAll()));
+        kcConfig.keycloaks().forEach((s, clientConfig) -> {
+            try {
+                realms.put(s, keycloakClients.get(s).realms().findAll());
+            } catch (Exception ex) {
+                Log.error("Provider: " + s + " not reachable. Skipped.");
+                realms.put(s, null);
+            }
+        });
         return realms;
     }
 
