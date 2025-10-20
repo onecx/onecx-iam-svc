@@ -77,7 +77,7 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
     @Override
     public Map<String, String> start() {
         var n = new JoinNetwork();
-        var container0 = new TestKeycloakContainer(n, KC0, "23.0.4");
+        var container0 = new TestKeycloakContainer(n, KC0, "26.2.0");
         containers.add(container0);
 
         var container1 = new TestKeycloakContainer(n, KC1, "18.0.0");
