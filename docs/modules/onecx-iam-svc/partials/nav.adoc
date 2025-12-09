@@ -1,0 +1,3 @@
+** xref:documentation:onecx-iam-svc:index.adoc[IAM Service]
+*** External API(s)
+**** xref:documentation:onecx-iam-svc:openapi/onecx-iam-svc-v1.adoc[IAM  Management V1]
