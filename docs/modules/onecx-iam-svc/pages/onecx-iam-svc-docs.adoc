@@ -48,10 +48,3 @@ app:
 
 ----
 
---
-
-  db:
-    enabled: false
-
-----
-
