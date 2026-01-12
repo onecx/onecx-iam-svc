@@ -1,10 +1,9 @@
 include::onecx-iam-svc-attributes.adoc[opts=optional]
 
-== onecx-iam-svc
+= OneCX Identity Access Management Backend Service
 
-include::docs.adoc[opts=optional]
 
-=== Configuration
+== Configuration
 include::onecx-iam-svc.adoc[opts=optional]
 
 include::onecx-iam-svc-docs.adoc[opts=optional]
