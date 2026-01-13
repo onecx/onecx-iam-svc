@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>onecx-iam-svc</artifactId>
+    <name>OneCX Identity Access Management Backend Service</name>
     <version>999-SNAPSHOT</version>
     <dependencies>
         <!-- TKIT -->
