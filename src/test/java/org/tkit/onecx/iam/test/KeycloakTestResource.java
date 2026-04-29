@@ -6,8 +6,6 @@ import static org.tkit.onecx.iam.test.RealmFactory.createRealm;
 import java.io.IOException;
 import java.util.*;
 
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.util.JsonSerialization;
@@ -152,11 +150,6 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
         @Override
         public void close() {
             // ignore
-        }
-
-        @Override
-        public Statement apply(Statement var1, Description var2) {
-            return null;
         }
     }
 }
