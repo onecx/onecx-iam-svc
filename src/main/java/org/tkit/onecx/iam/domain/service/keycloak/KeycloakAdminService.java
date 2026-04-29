@@ -102,7 +102,7 @@ public class KeycloakAdminService {
         List<UserRepresentation> users;
         try {
             users = List.of(keycloakClients.get(provider).realm(realm).users().get(userId).toRepresentation());
-        } catch (ClientWebApplicationException ex) {
+        } catch (ClientWebApplicationException _) {
             users = new ArrayList<>();
         }
         return users;
@@ -125,7 +125,7 @@ public class KeycloakAdminService {
         kcConfig.keycloaks().forEach((s, clientConfig) -> {
             try {
                 realms.put(s, keycloakClients.get(s).realms().findAll());
-            } catch (Exception ex) {
+            } catch (Exception _) {
                 Log.error("Provider: " + s + " not reachable. Skipped.");
                 realms.put(s, null);
             }
