@@ -116,6 +116,8 @@ public interface AdminMapper {
     @Mapping(target = "clientConsents", ignore = true)
     @Mapping(target = "applicationRoles", ignore = true)
     @Mapping(target = "access", ignore = true)
+    @Mapping(target = "verifiableCredentials", ignore = true)
+    @Mapping(target = "issuedVerifiableCredentials", ignore = true)
     UserRepresentation createUser(CreateUserRequestDTO createUserRequestDTO);
 
     @Mapping(target = "username", ignore = true)
@@ -142,6 +144,8 @@ public interface AdminMapper {
     @Mapping(target = "clientConsents", ignore = true)
     @Mapping(target = "applicationRoles", ignore = true)
     @Mapping(target = "access", ignore = true)
+    @Mapping(target = "verifiableCredentials", ignore = true)
+    @Mapping(target = "issuedVerifiableCredentials", ignore = true)
     UserRepresentation updateUser(UpdateUserRequestDTO updateUserRequestDTO);
 
     @Mapping(target = "id", ignore = true)

@@ -8,7 +8,6 @@ import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.representations.AccessTokenResponse;
 
-import io.quarkus.test.common.DevServicesContext;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.keycloak.client.KeycloakTestClient;
 import io.restassured.RestAssured;
@@ -21,33 +20,32 @@ public abstract class AbstractTest {
     public static final String USER_BOB = "bob";
     public static final String USER_ALICE = "alice";
     protected static final String APM_HEADER_TOKEN = "apm-principal-token";
-    DevServicesContext testContext;
 
-    protected KeycloakTestClient authClient = new KeycloakTestClient();
+    protected static KeycloakTestClient authClient = new KeycloakTestClient(new KeycloakTestClient().getAuthServerUrl());
 
-    protected KeycloakTestClient keycloakClient = createClient();
+    protected static KeycloakTestClient keycloakClient = createClient();
 
     protected String getClientId() {
         return getPropertyValue(CLIENT_ID_PROP, "quarkus-app");
     }
 
-    protected KeycloakTestClient createClient() {
+    protected static KeycloakTestClient createClient() {
         return new KeycloakTestClient(getPropertyValue(urlClientProp(KC0), null));
     }
 
-    protected KeycloakTestClient keycloakClient1 = createClient1();
+    protected static KeycloakTestClient keycloakClient1 = createClient1();
 
-    protected KeycloakTestClient createClient1() {
+    protected static KeycloakTestClient createClient1() {
         return new KeycloakTestClient(getPropertyValue(urlClientProp(KC1), null));
     }
 
-    protected String getPropertyValue(String prop, String defaultValue) {
+    protected static String getPropertyValue(String prop, String defaultValue) {
         return ConfigProvider.getConfig().getOptionalValue(prop, String.class)
                 .orElseGet(() -> getDevProperty(prop, defaultValue));
     }
 
-    private String getDevProperty(String prop, String defaultValue) {
-        String value = testContext == null ? null : testContext.devServicesProperties().get(prop);
+    private static String getDevProperty(String prop, String defaultValue) {
+        String value = KC_PROPS.get(prop);
         return value == null ? defaultValue : value;
     }
 
