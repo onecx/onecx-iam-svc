@@ -28,7 +28,7 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
     private static final Logger log = LoggerFactory.getLogger(KeycloakTestResource.class);
     private static final String KEYCLOAK_REALM = "quarkus";
     private final List<TestKeycloakContainer> containers = new ArrayList<>();
-    protected static Map<String, String> KC_PROPS = new HashMap<>();
+    protected static Map<String, String> kcProps = new HashMap<>();
 
     @Override
     public void setIntegrationTestContext(DevServicesContext context) {
@@ -89,7 +89,7 @@ public class KeycloakTestResource implements QuarkusTestResourceLifecycleManager
             result.put(urlClientProp(c.getName()), c.getServerUrl());
             result.put(urlProp(c.getName()), containerNetworkId == null ? c.getServerUrl() : c.getInternalUrl());
         });
-        KC_PROPS.putAll(result);
+        kcProps.putAll(result);
         return result;
     }
 

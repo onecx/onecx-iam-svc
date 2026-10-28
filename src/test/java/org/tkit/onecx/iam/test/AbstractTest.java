@@ -45,7 +45,7 @@ public abstract class AbstractTest {
     }
 
     private static String getDevProperty(String prop, String defaultValue) {
-        String value = KC_PROPS.get(prop);
+        String value = kcProps.get(prop);
         return value == null ? defaultValue : value;
     }
 
